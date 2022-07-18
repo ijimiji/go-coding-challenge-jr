@@ -20,7 +20,9 @@ func (s *ChallengeServer) StartTimer(timer *proto.Timer, _ proto.ChallengeServic
 
 func Run() {
 	logger.InfoLogger.Println("Sourcing vars")
-	config.Read(".env")
+	if err := config.Read(".env"); err != nil {
+		logger.ErrorLogger.Fatalln("Error while sourcing vars")
+	}
 	cfg := config.Get()
 
 	logger.InfoLogger.Println("Creating server")
