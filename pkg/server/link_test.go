@@ -22,7 +22,7 @@ func TestShortenLink(t *testing.T) {
 		},
 	}
 	for _, tc := range tests {
-		server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		server := httptest.NewServer(http.HandlerFunc(func(rw http.ResponseWriter, _ *http.Request) {
 			form, _ := json.Marshal(map[string]string{"link": tc.want})
 			rw.Write(form)
 		}))

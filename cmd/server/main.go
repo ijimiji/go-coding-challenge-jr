@@ -1,5 +1,7 @@
 package main
 
-func main() {
+import "challenge/pkg/server"
 
+func main() {
+	server.Run()
 }
