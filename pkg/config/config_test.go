@@ -22,6 +22,7 @@ func TestConfig(t *testing.T) {
 		}
 		cfg := Get()
 		if !cmp.Equal(&tc.want, cfg) {
+			t.Logf("%+v", cfg)
 			t.Errorf("Read wrong values from config %s", tc.path)
 		}
 	}

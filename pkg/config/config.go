@@ -14,7 +14,6 @@ type Config struct {
 }
 
 var config = Config{}
-var read = false
 
 func isBlankAny(cfg Config) bool {
 	v := reflect.ValueOf(cfg)
@@ -27,20 +26,22 @@ func isBlankAny(cfg Config) bool {
 }
 
 func Read(path string) error {
-	if read {
-		return nil
-	}
 
 	viper.AutomaticEnv()
 	viper.SetConfigFile(path)
-	if err := viper.ReadInConfig(); err != nil {
-		return err
+	// Don't throw error cause variables still might have been set manually without .env
+	viper.ReadInConfig()
+
+	config = Config{
+		Login: viper.GetString("BITLY_OAUTH_LOGIN"),
+		Token: viper.GetString("BITLY_OAUTH_TOKEN"),
+		Port:  viper.GetString("PORT"),
 	}
 
-	if err := viper.Unmarshal(&config); err != nil || isBlankAny(config) {
-		return errors.New("can't read config correctly")
+	if isBlankAny(config) {
+		return errors.New("some variables are not initialized")
 	}
-	read = true
+
 	return nil
 }
 
