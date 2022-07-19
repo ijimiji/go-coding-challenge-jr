@@ -11,19 +11,26 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+    - name: Extract metadata (tags, labels) for Docker
+      id: meta
+      uses: docker/metadata-action@v3.6.1
+      with:
+        tags: type=raw,value=latest
+        images: ghcr.io/ijimiji/go-coding-challenge-jr
     - name: Login
-      uses: docker/login-action@v2
+      uses: docker/login-action@v1.10.0
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
         password: ${{ secrets.PAT }}
     - name: 'Build'
-      uses: docker/build-push-action@v2
+      uses: docker/build-push-action@v2.7.0
       with:
-        registry: ghcr.io
-        username: "ijimiji"
-        password: ${{ secrets.PAT }}
-        repository: ijimiji/go-coding-challenge-jr
-        tags: latest
+        context: .
+        file: Dockerfile
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+
     - name: Test
-      run: docker run latest go test ./...
+      run: docker run ghcr.io/ijimiji/go-coding-challenge-jr:latest go test ./...
