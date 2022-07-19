@@ -14,10 +14,6 @@ type ChallengeServer struct {
 	proto.UnimplementedChallengeServiceServer
 }
 
-func (s *ChallengeServer) StartTimer(timer *proto.Timer, _ proto.ChallengeService_StartTimerServer) error {
-	return nil
-}
-
 func Run() {
 	logger.InfoLogger.Println("Sourcing vars")
 	if err := config.Read(".env"); err != nil {

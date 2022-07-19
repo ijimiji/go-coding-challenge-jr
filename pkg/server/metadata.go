@@ -12,7 +12,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var desiredKey = "i-am-random-key"
+var DesiredKey = "i-am-random-key"
 
 func (s *ChallengeServer) ReadMetadata(ctx context.Context, placeHolder *proto.Placeholder) (*proto.Placeholder, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
@@ -22,7 +22,7 @@ func (s *ChallengeServer) ReadMetadata(ctx context.Context, placeHolder *proto.P
 	}
 
 	data := ""
-	if arrData := md.Get(desiredKey); len(arrData) > 0 {
+	if arrData := md.Get(DesiredKey); len(arrData) > 0 {
 		data = arrData[0]
 	}
 

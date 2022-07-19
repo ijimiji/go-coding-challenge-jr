@@ -28,7 +28,7 @@ func TestReadMetadata(t *testing.T) {
 	}
 	for _, tc := range tests {
 		resp, err := s.ReadMetadata(metadata.NewIncomingContext(context.Background(), metadata.New(map[string]string{
-			desiredKey: tc.value})), nil)
+			DesiredKey: tc.value})), nil)
 		if err != nil && !tc.shouldThrow {
 			t.Error("Unexpected exception while reading metadata")
 		}
