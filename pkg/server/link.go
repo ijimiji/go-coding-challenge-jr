@@ -4,6 +4,7 @@ package server
 import (
 	"bytes"
 	"challenge/pkg/config"
+	"challenge/pkg/logger"
 	"challenge/pkg/proto"
 	"context"
 	"encoding/json"
@@ -11,18 +12,23 @@ import (
 	"net/http"
 )
 
+// get config for token
 var cfg = config.Get()
 
 type API struct {
-	Client  *http.Client
+	// http client to pass with testing in mind
+	Client *http.Client
+	// common url part
 	BaseURL string
 }
 
+// api specifically for bitly
 var bitlyAPI = API{
 	Client:  &http.Client{},
 	BaseURL: "https://api-ssl.bitly.com/v4",
 }
 
+// http part of url shortener
 func (api *API) shortenLink(link string) (string, error) {
 
 	// "long_url" field is a link to be shortened
@@ -49,7 +55,10 @@ func (api *API) shortenLink(link string) (string, error) {
 	return values.Link, err
 }
 
+// rpc part of url shortener
 func (s *ChallengeServer) MakeShortLink(_ context.Context, link *proto.Link) (*proto.Link, error) {
+
+	logger.Info.Println("Shortening url...")
 
 	shortenedLink, err := bitlyAPI.shortenLink(link.GetData())
 	if err != nil {

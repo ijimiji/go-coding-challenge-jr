@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	InfoLogger    = log.New(os.Stdout, color.GreenString("INFO: "), log.Ltime|log.Lshortfile)
-	WarningLogger = log.New(os.Stdout, color.YellowString("WARNING : "), log.Ltime|log.Lshortfile)
-	ErrorLogger   = log.New(os.Stderr, color.RedString("ERROR: "), log.Ltime|log.Lshortfile)
+	Info  = log.New(os.Stdout, color.GreenString("INFO: "), log.Ltime|log.Lshortfile)
+	Warn  = log.New(os.Stdout, color.YellowString("WARNING : "), log.Ltime|log.Lshortfile)
+	Error = log.New(os.Stderr, color.RedString("ERROR: "), log.Ltime|log.Lshortfile)
 )

@@ -18,25 +18,24 @@ var shortenCmd = &cobra.Command{
 	Short: "Shorten link",
 	Long:  `Shorten link via gRPC`,
 	Run: func(_ *cobra.Command, _ []string) {
-		logger.InfoLogger.Println("Shortening url...")
 
 		config.Read(".env")
 		cfg := config.Get()
 
 		if longUrl == "" {
-			logger.ErrorLogger.Fatalln("No link was provided")
+			logger.Error.Fatalln("No link was provided")
 		}
 
-		logger.InfoLogger.Printf("Connecting to localhost:%s\n", cfg.Port)
+		logger.Info.Printf("Connecting to localhost:%s\n", cfg.Port)
 		conn, err := grpc.Dial("localhost:"+cfg.Port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
-			logger.ErrorLogger.Fatalln("Can't create connection for shortener client")
+			logger.Error.Fatalln("Can't create connection for shortener client")
 		}
 		defer conn.Close()
 		client := proto.NewChallengeServiceClient(conn)
 		link, err := client.MakeShortLink(context.Background(), &proto.Link{Data: longUrl})
 		if err != nil {
-			logger.ErrorLogger.Fatalln(err.Error())
+			logger.Error.Fatalln(err.Error())
 		}
 
 		fmt.Printf("Shortened link: %s\n", link.GetData())

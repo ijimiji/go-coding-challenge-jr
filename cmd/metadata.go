@@ -20,16 +20,16 @@ var metadataCmd = &cobra.Command{
 	Short: "Get metadata",
 	Long:  `Get metadata via gRPC`,
 	Run: func(_ *cobra.Command, _ []string) {
-		logger.InfoLogger.Println("Reading metadata...")
+		logger.Info.Println("Reading metadata...")
 
 		config.Read(".env")
 		cfg := config.Get()
 
-		logger.InfoLogger.Printf("Connecting to localhost:%s\n", cfg.Port)
+		logger.Info.Printf("Connecting to localhost:%s\n", cfg.Port)
 		conn, err := grpc.Dial("localhost:"+cfg.Port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 
 		if err != nil {
-			logger.ErrorLogger.Fatalln("Can't create connection for metadata client")
+			logger.Error.Fatalln("Can't create connection for metadata client")
 		}
 
 		defer conn.Close()
@@ -37,7 +37,7 @@ var metadataCmd = &cobra.Command{
 		value, err := client.ReadMetadata(metadata.NewOutgoingContext(context.Background(), metadata.New(map[string]string{"i-am-random-key": mdValue})), &proto.Placeholder{Data: "foo"})
 
 		if err != nil {
-			logger.ErrorLogger.Fatalln(err.Error())
+			logger.Error.Fatalln(err.Error())
 		}
 
 		fmt.Printf("Extracted metadata: %s\n", value.GetData())
