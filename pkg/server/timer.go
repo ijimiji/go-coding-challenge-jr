@@ -14,6 +14,8 @@ var timerAPI = API{
 	Client:  &http.Client{},
 }
 
+var activeTimers map[string]bool = map[string]bool{}
+
 // create remote timer with name: `name` and duration: `duration`
 func (api *API) createTimer(name string, duration int) error {
 	resp, err := api.Client.Get(fmt.Sprintf("%s/%s/%d", api.BaseURL, name, duration))
@@ -60,12 +62,23 @@ func (api *API) pingTimer(name string) (*proto.Timer, error) {
 
 func (s *ChallengeServer) StartTimer(timer *proto.Timer, stream proto.ChallengeService_StartTimerServer) error {
 	logger.Info.Println("Starting timer...")
-	if err := timerAPI.createTimer(timer.GetName(), int(timer.GetSeconds())); err != nil {
-		logger.Error.Println("Cannot create remote timer")
-		return err
+
+	if _, ok := activeTimers[timer.Name]; ok {
+		newTimer, err := timerAPI.pingTimer(timer.Name)
+		if err != nil {
+			logger.Error.Println("Cannot update remote timer")
+			return err
+		}
+		timer.Seconds = newTimer.Seconds
+	} else {
+		activeTimers[timer.Client.Id] = true
+		if err := timerAPI.createTimer(timer.Name, int(timer.Seconds)); err != nil {
+			logger.Error.Println("Cannot create remote timer")
+			return err
+		}
 	}
 
-	ticker := time.NewTicker(time.Duration(timer.GetFrequency()) * time.Second)
+	ticker := time.NewTicker(time.Duration(timer.Frequency) * time.Second)
 	done := make(chan bool)
 
 	var streamerr error = nil
@@ -73,15 +86,16 @@ func (s *ChallengeServer) StartTimer(timer *proto.Timer, stream proto.ChallengeS
 		for {
 			select {
 			case <-done:
+				activeTimers[timer.Client.Id] = false
 				return
 			case <-ticker.C:
 				logger.Info.Println("tick")
-				newTimer, err := timerAPI.pingTimer(timer.GetName())
+				newTimer, err := timerAPI.pingTimer(timer.Name)
 				if err != nil {
 					streamerr = err
 					done <- true
 				}
-				if newTimer.GetSeconds() == 0 {
+				if newTimer.Seconds == 0 {
 					done <- true
 				}
 				stream.SendMsg(newTimer)
@@ -89,7 +103,7 @@ func (s *ChallengeServer) StartTimer(timer *proto.Timer, stream proto.ChallengeS
 		}
 	}()
 
-	time.Sleep(time.Duration(timer.GetSeconds()) * time.Second)
+	time.Sleep(time.Duration(timer.Seconds) * time.Second)
 	ticker.Stop()
 	done <- true
 

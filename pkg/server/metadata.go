@@ -21,9 +21,10 @@ func (s *ChallengeServer) ReadMetadata(ctx context.Context, placeHolder *proto.P
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		logger.Error.Println("Can't read metadata from context")
-		return nil, errors.New("can't read metadata from context")
+		return &proto.Placeholder{}, errors.New("can't read metadata from context")
 	}
 
+	// get only the first value, if got several of them
 	data := ""
 	if arrData := md.Get(DesiredKey); len(arrData) > 0 {
 		data = arrData[0]
@@ -31,7 +32,7 @@ func (s *ChallengeServer) ReadMetadata(ctx context.Context, placeHolder *proto.P
 
 	if data == "" {
 		logger.Error.Println("Can't read metadata from context")
-		return nil, status.Errorf(codes.InvalidArgument, "no key/value was provided")
+		return &proto.Placeholder{}, status.Errorf(codes.InvalidArgument, "no key/value was provided")
 	}
 
 	return &proto.Placeholder{Data: data}, nil

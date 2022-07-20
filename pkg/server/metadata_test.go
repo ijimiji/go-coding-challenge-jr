@@ -32,7 +32,7 @@ func TestReadMetadata(t *testing.T) {
 		if err != nil && !tc.shouldThrow {
 			t.Error("Unexpected exception while reading metadata")
 		}
-		if resp.GetData() != tc.value {
+		if resp.Data != tc.value {
 			t.Errorf("Wanted %s. Got %s", tc.value, resp.GetData())
 		}
 	}

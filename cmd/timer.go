@@ -13,6 +13,7 @@ import (
 )
 
 var timerName string
+var clientName string
 var timerDuration int64
 var timerFreq int64
 
@@ -39,6 +40,7 @@ var timerCmd = &cobra.Command{
 			Seconds:   timerDuration,
 			Frequency: timerFreq,
 			Name:      timerName,
+			Client:    &proto.Client{Id: clientName},
 		})
 		if err != nil {
 			logger.Error.Fatalln("Cannot create remote timer")
@@ -58,7 +60,7 @@ var timerCmd = &cobra.Command{
 					logger.Error.Println(err)
 				}
 
-				logger.Info.Printf("%s: %d\n", timer.GetName(), timer.GetSeconds())
+				logger.Info.Printf("%s: %d\n", timer.Name, timer.Seconds)
 			}
 		}()
 
@@ -68,7 +70,8 @@ var timerCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(timerCmd)
-	timerCmd.Flags().StringVarP(&timerName, "name", "n", "", "Timer name")
+	timerCmd.Flags().StringVarP(&timerName, "id", "i", "", "Timer name")
+	timerCmd.Flags().StringVarP(&clientName, "name", "n", "anon", "Client name")
 	timerCmd.Flags().Int64VarP(&timerDuration, "seconds", "d", 60, "Timer durations in seconds")
 	timerCmd.Flags().Int64VarP(&timerFreq, "freq", "f", 1, "Timer frequency in seconds")
 }

@@ -10,7 +10,7 @@ func TestCreateTimer(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	if timer.GetSeconds() == 0 {
+	if timer.Seconds == 0 {
 		t.Error("Timer is 0 even after creation")
 	}
 }

@@ -4,7 +4,7 @@ message Link {
     string data = 1;
 }
 
-message User {
+message Client {
     string id = 1;
 }
 
@@ -12,6 +12,7 @@ message Timer {
     string name = 1;
     int64  seconds = 2;
     int64  frequency = 3;
+    Client client = 4;
 }
 
 message Placeholder {
