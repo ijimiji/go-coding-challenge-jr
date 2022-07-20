@@ -25,6 +25,7 @@ func (api *API) createTimer(name string, duration int) error {
 	return nil
 }
 
+// send http request to get remaining time of timer `name`
 func (api *API) pingTimer(name string) (*proto.Timer, error) {
 	resp, err := api.Client.Get(fmt.Sprintf("%s/%s", api.BaseURL, name))
 
@@ -45,8 +46,9 @@ func (api *API) pingTimer(name string) (*proto.Timer, error) {
 		Timer            string  `json:"timer"`
 		SecondsRemaining float64 `json:"seconds_remaining"`
 	}{}
+
 	if err = json.NewDecoder(resp.Body).Decode(&values); err != nil {
-		logger.Error.Fatalln(values)
+		logger.Error.Println(values)
 		return nil, err
 	}
 
@@ -59,29 +61,37 @@ func (api *API) pingTimer(name string) (*proto.Timer, error) {
 func (s *ChallengeServer) StartTimer(timer *proto.Timer, stream proto.ChallengeService_StartTimerServer) error {
 	logger.Info.Println("Starting timer...")
 	if err := timerAPI.createTimer(timer.GetName(), int(timer.GetSeconds())); err != nil {
-		logger.Error.Fatalln("Cannot create remote timer")
+		logger.Error.Println("Cannot create remote timer")
+		return err
 	}
 
-	var running = true
+	ticker := time.NewTicker(time.Duration(timer.GetFrequency()) * time.Second)
+	done := make(chan bool)
 
-	// it's very very dirty, but I'll try to fix it
-	for running {
-		logger.Info.Println("tick")
-
-		time.Sleep(time.Duration(timer.Frequency) * time.Second)
-		resp, err := timerAPI.pingTimer(timer.GetName())
-		if err != nil {
-			logger.Error.Fatalln(err)
+	var streamerr error = nil
+	go func() {
+		for {
+			select {
+			case <-done:
+				return
+			case <-ticker.C:
+				logger.Info.Println("tick")
+				newTimer, err := timerAPI.pingTimer(timer.GetName())
+				if err != nil {
+					streamerr = err
+					done <- true
+				}
+				if newTimer.GetSeconds() == 0 {
+					done <- true
+				}
+				stream.SendMsg(newTimer)
+			}
 		}
+	}()
 
-		if resp.GetSeconds() == 0 {
-			running = false
-		}
+	time.Sleep(time.Duration(timer.GetSeconds()) * time.Second)
+	ticker.Stop()
+	done <- true
 
-		if err := stream.Send(resp); err != nil {
-			logger.Error.Fatalln("Error while sending message to timer stream")
-		}
-	}
-
-	return nil
+	return streamerr
 }
