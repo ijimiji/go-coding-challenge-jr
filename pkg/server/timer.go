@@ -4,6 +4,7 @@ import (
 	"challenge/pkg/logger"
 	"challenge/pkg/proto"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -13,8 +14,6 @@ var timerAPI = API{
 	BaseURL: "https://timercheck.io",
 	Client:  &http.Client{},
 }
-
-var activeTimers map[string]bool = map[string]bool{}
 
 // create remote timer with name: `name` and duration: `duration`
 func (api *API) createTimer(name string, duration int) error {
@@ -44,6 +43,11 @@ func (api *API) pingTimer(name string) (*proto.Timer, error) {
 		}, nil
 	}
 
+	// handle nonexistent timers on 404 error code for example
+	if resp.StatusCode != 200 {
+		return &proto.Timer{}, errors.New("non 200 return code")
+	}
+
 	values := struct {
 		Timer            string  `json:"timer"`
 		SecondsRemaining float64 `json:"seconds_remaining"`
@@ -63,19 +67,18 @@ func (api *API) pingTimer(name string) (*proto.Timer, error) {
 func (s *ChallengeServer) StartTimer(timer *proto.Timer, stream proto.ChallengeService_StartTimerServer) error {
 	logger.Info.Println("Starting timer...")
 
-	if _, ok := activeTimers[timer.Name]; ok {
-		newTimer, err := timerAPI.pingTimer(timer.Name)
-		if err != nil {
-			logger.Error.Println("Cannot update remote timer")
-			return err
-		}
-		timer.Seconds = newTimer.Seconds
-	} else {
-		activeTimers[timer.Client.Id] = true
+	t, err := timerAPI.pingTimer(timer.Name)
+
+	// timer doesn't even exist or run out
+	if err != nil || t.Seconds == 0 {
 		if err := timerAPI.createTimer(timer.Name, int(timer.Seconds)); err != nil {
-			logger.Error.Println("Cannot create remote timer")
 			return err
 		}
+	} else {
+		// timer exists, running and clients should resubscribe to it
+
+		// replace seconds to create correct ticker below
+		timer.Seconds = t.Seconds
 	}
 
 	ticker := time.NewTicker(time.Duration(timer.Frequency) * time.Second)
@@ -86,7 +89,6 @@ func (s *ChallengeServer) StartTimer(timer *proto.Timer, stream proto.ChallengeS
 		for {
 			select {
 			case <-done:
-				activeTimers[timer.Client.Id] = false
 				return
 			case <-ticker.C:
 				logger.Info.Println("tick")
