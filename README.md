@@ -1,5 +1,12 @@
 # Go Coding Challenge - J
 
+## Running locally
+Provide valid .env file in the root of the project or export corresponding variables.
+- `go run cmd/server/main.go` to run server.
+- `go run cmd/client/main.go meta --metadata="key"` to test metadata extractor.
+- `go run cmd/client/main.go link --link="link"` to test url shortener.
+- `go run cmd/client/main.go timer --name="timername" --freq=1 --seconds=60` to test timer.
+
 ## Testing (or getting) Knowledge
 
 - Go-lang
